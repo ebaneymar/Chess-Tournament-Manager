@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chess Tournament Manager 2.0 MODULAR - John Vincent A. Averia</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+<div class="home-screen" id="homeScreen">
+  <div class="home-panel">
+    <div class="home-mark">♞</div>
+    <h1>Chess Tournament Manager</h1>
+    <div class="subtitle">Offline Tournament Management System</div>
+    <div class="home-neutral-note">
+      Starts at Main Menu only — no tournament or pairing opens automatically.
+    </div>
+
+    <div class="home-menu">
+      <button class="primary" onclick="beginNewTournament()"><span class="menu-icon">▶</span><span data-i18n="newTournament">NEW TOURNAMENT</span></button>
+      <button onclick="homeOpenPlayers()"><span class="menu-icon">♟</span><span data-i18n="playersRoster">PLAYERS / ROSTER</span></button>
+      <button type="button" onclick="homeOpenSettings();return false;"><span class="menu-icon">⚙</span><span data-i18n="settingsCaps">SETTINGS</span></button>
+      <button class="exit" onclick="exitProgram()"><span class="menu-icon">✕</span>EXIT</button>
+    </div>
+
+    <div class="saved-tournaments-home">
+      <div class="saved-tournaments-head">
+        <div>
+          <b>Saved Tournaments</b>
+          <div class="help">Open a saved event only when you choose <b>Open Dashboard</b>. Existing rounds stay saved but are not opened at startup.</div>
+        </div>
+        <span class="badge gold" id="savedTournamentCount">0</span>
+      </div>
+      <div id="savedTournamentList"></div>
+    </div>
+
+    <div class="home-credit">
+      Concept and Program Design by<br>
+      <b>JOHN VINCENT A. AVERIA</b>
+    </div>
+  </div>
+</div>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">♞</div>
+      <div><h1>Chess Manager</h1><small>Offline Tournament Suite</small></div>
+    </div>
+    <div class="nav" id="nav">
+      <button class="active" data-tab="dashboard"><span class="icon">▦</span><span data-i18n="dashboard">Dashboard</span></button>
+      <button data-tab="players"><span class="icon">♟</span><span data-i18n="players">Players</span></button>
+      <button data-tab="pairings"><span class="icon">⚔</span><span data-i18n="pairings">Pairings & Results</span></button>
+      <button data-tab="standings"><span class="icon">🏆</span><span data-i18n="standings">Standings</span></button>
+      <button data-tab="tiebreaks"><span class="icon">⇅</span><span data-i18n="tiebreaks">Tie-break Order</span></button>
+      <button data-tab="notation"><span class="icon">✎</span><span data-i18n="notation">Notation Sheet</span></button>
+      <button data-tab="reports"><span class="icon">▤</span><span data-i18n="reports">Reports</span></button>
+      <button type="button" id="navSettingsButton" onclick="openSettingsPanel(event,false);return false;"><span class="icon">⚙</span><span data-i18n="settings">Settings</span></button>
+    </div>
+    <div class="side-footer">
+      Concept and Program Design<br><b>JOHN VINCENT A. AVERIA</b><br>
+      Data stays on this device.
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="title"><h2 id="pageTitle">Tournament Dashboard</h2><p id="eventSubtitle">Tournament overview and management.</p></div>
+      <div class="actions no-print">
+        <select id="activeTournamentSwitcher" class="tournament-switcher" onchange="switchTournamentFromSelect(this.value)">
+          <option value="">No tournament selected</option>
+        </select>
+        <div class="theme-switch no-print" role="group" aria-label="Color theme">
+          <button type="button" id="lightThemeBtn" onclick="setAppTheme('light')" aria-pressed="true" title="Light theme">☀ <span class="theme-label-text">Light</span></button>
+          <button type="button" id="darkThemeBtn" onclick="setAppTheme('dark')" aria-pressed="false" title="Dark theme">☾ <span class="theme-label-text">Dark</span></button>
+        </div>
+        <button class="btn" onclick="showHomeScreen()" data-i18n="tournaments">Tournaments</button>
+        <button class="btn" onclick="saveNow()" data-i18n="save">Save</button>
+        <button class="btn" onclick="exportData()">Export</button>
+        <button class="btn" onclick="document.getElementById('importFile').click()">Import</button>
+        <input id="importFile" type="file" accept=".json" style="display:none" onchange="importData(event)">
+        <button class="btn primary" onclick="loadSample()">Load Sample</button>
+      </div>
+    </div>
+
+    <section id="dashboard" class="section active">
+      <div class="grid">
+        <div class="card kpi"><div class="num" id="kpiPlayers" aria-live="polite">0</div><div class="lab">Players</div></div>
+        <div class="card kpi"><div class="num" id="kpiRound" aria-live="polite">0</div><div class="lab">Current Round</div></div>
+        <div class="card kpi"><div class="num" id="kpiGames" aria-live="polite">0</div><div class="lab">Games Recorded</div></div>
+        <div class="card kpi"><div class="num" id="kpiLeader" aria-live="polite">—</div><div class="lab">Tournament Leader</div></div>
+
+        <div class="card span12 clean-round-status">
+          <div class="clean-round-status-main">
+            <div>
+              <div class="wizard-participant-kicker">PAIRING STATUS</div>
+              <h3 id="cleanRoundStatusTitle" style="margin:3px 0 4px">No Round Generated</h3>
+              <div id="cleanRoundStatusHelp" class="help">Round 1 will appear only after you explicitly generate it.</div>
+            </div>
+            <button type="button" class="btn primary" id="dashboardGenerateRoundBtn" onclick="goTab('pairings')">Open Pairings →</button>
+          </div>
+        </div>
+
+        <div class="card span8">
+          <h3>Tournament Setup</h3>
+          <div class="form-row">
+            <div class="field wide"><label>Event Name</label><input id="eventName" value="School Chess Championship" oninput="syncSettings()"></div>
+            <div class="field"><label>Mode</label>
+              <select id="mode" onchange="syncSettings()" disabled>
+                <option value="">Selected during Start Tournament</option>
+                <option value="swiss">Swiss</option>
+                <option value="roundrobin">Round Robin</option>
+                <option value="knockout">Knockout</option>
+                <option value="team">Team Tournament</option>
+              </select>
+            </div>
+            <div class="field"><label>Meet Level</label>
+              <select id="meetLevel" onchange="syncSettings()">
+                <option value="municipal">Municipal / District Meet — show School</option>
+                <option value="division">Division / Provincial Meet — show Town/City</option>
+                <option value="regional">Regional Meet — show Town/City</option>
+                <option value="national">National / Palarong Pambansa — show Region</option>
+              </select>
+            </div>
+
+            <div class="field full" id="modeTieBreakBox">
+              <div style="border:1px solid var(--line);border-radius:10px;padding:12px;background:#11161a">
+                <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px">
+                  <div>
+                    <b id="modeTieBreakTitle" style="color:var(--accent2)">Swiss Tie-break Order</b>
+                    <div id="modeTieBreakHelp" class="help">This order belongs to Swiss only. #1 is checked first.</div>
+                  </div>
+                  <button type="button" class="btn small" onclick="goTab('tiebreaks')">Advanced</button>
+                </div>
+                <div class="toolbar tb-presets" style="margin-bottom:10px">
+                  <button type="button" class="btn small" onclick="setTieBreakCount(5)">Use First 5</button>
+                  <button type="button" class="btn small" onclick="setTieBreakCount(8)">Enable 8 Slots</button>
+                  <button type="button" class="btn small" onclick="setTieBreakCount(0)">Points Only</button>
+                </div>
+                <div class="form-row" style="margin-bottom:0">
+                  <div class="field tb-slot">
+                    <label class="tb-slot-head"><input type="checkbox" id="tbEn1" onchange="applyModeTieBreaks()"> <span>1st Tie-break</span></label>
+                    <select id="tb1" onchange="applyModeTieBreaks()"></select>
+                  </div>
+                  <div class="field tb-slot">
+                    <label class="tb-slot-head"><input type="checkbox" id="tbEn2" onchange="applyModeTieBreaks()"> <span>2nd Tie-break</span></label>
+                    <select id="tb2" onchange="applyModeTieBreaks()"></select>
+                  </div>
+                  <div class="field tb-slot">
+                    <label class="tb-slot-head"><input type="checkbox" id="tbEn3" onchange="applyModeTieBreaks()"> <span>3rd Tie-break</span></label>
+                    <select id="tb3" onchange="applyModeTieBreaks()"></select>
+                  </div>
+                  <div class="field tb-slot">
+                    <label class="tb-slot-head"><input type="checkbox" id="tbEn4" onchange="applyModeTieBreaks()"> <span>4th Tie-break</span></label>
+                    <select id="tb4" onchange="applyModeTieBreaks()"></select>
+                  </div>
+                  <div class="field tb-slot">
+                    <label class="tb-slot-head"><input type="checkbox" id="tbEn5" onchange="applyModeTieBreaks()"> <span>5th Tie-break</span></label>
+                    <select id="tb5" onchange="applyModeTieBreaks()"></select>
+                  </div>
+                  <div class="field tb-slot">
+                    <label class="tb-slot-head"><input type="checkbox" id="tbEn6" onchange="applyModeTieBreaks()"> <span>6th Tie-break</span></label>
+                    <select id="tb6" onchange="applyModeTieBreaks()"></select>
+                  </div>
+                  <div class="field tb-slot">
+                    <label class="tb-slot-head"><input type="checkbox" id="tbEn7" onchange="applyModeTieBreaks()"> <span>7th Tie-break</span></label>
+                    <select id="tb7" onchange="applyModeTieBreaks()"></select>
+                  </div>
+                  <div class="field tb-slot">
+                    <label class="tb-slot-head"><input type="checkbox" id="tbEn8" onchange="applyModeTieBreaks()"> <span>8th Tie-break</span></label>
+                    <select id="tb8" onchange="applyModeTieBreaks()"></select>
+                  </div>
+                </div>
+                <div id="formatTieBreakSummary" class="help" style="margin-top:10px;padding-top:9px;border-top:1px solid var(--line)"></div>
+              </div>
+            </div>
+            <div class="field"><label>Rounds</label><input id="rounds" type="number" min="1" max="30" value="5" oninput="syncSettings()"></div>
+            <div class="field"><label>Date</label><input id="eventDate" type="date" onchange="syncSettings()"></div>
+            <div class="field wide" style="position:relative"><label>School / DepEd School ID</label>
+              <input id="school" value="" placeholder="Type School ID or school name, e.g. 108661" oninput="lookupTournamentSchool()" autocomplete="off">
+              <div id="tournamentSchoolPopup" style="display:none;position:absolute;left:0;right:0;top:64px;z-index:30;background:#0f1316;border:1px solid var(--line);border-radius:9px;box-shadow:0 10px 25px rgba(0,0,0,.35);max-height:230px;overflow:auto"></div>
+            </div>
+            <div class="field"><label>Venue</label><input id="venue" value="School Activity Area" oninput="syncSettings()"></div>
+            <div class="field"><label>Chief Arbiter</label><input id="chiefArbiter" placeholder="Chief Arbiter name" oninput="syncSettings()"></div>
+            <div class="field"><label>Tournament Director (TD)</label><input id="tournamentDirector" value="John Vincent A. Averia" placeholder="Tournament Director name" oninput="syncSettings()"></div>
+            <div class="field"><label>Time Control</label>
+              <select id="timeControl" onchange="syncSettings()">
+                <option value="No Clock">No Clock</option>
+                <option value="60+0">60+0</option>
+                <option value="45+15">45+15</option>
+                <option value="30+0">30+0</option>
+                <option value="25+5">25+5</option>
+                <option value="15+10">15+10</option>
+                <option value="10+5">10+5</option>
+                <option value="10+0" selected>10+0</option>
+                <option value="5+3">5+3</option>
+                <option value="5+0">5+0</option>
+                <option value="3+2">3+2</option>
+                <option value="3+0">3+0</option>
+                <option value="1+0">1+0</option>
+              </select>
+            </div>
+          </div>
+          <div class="toolbar no-print">
+            <button class="btn primary" onclick="beginNewTournament()">＋ New Tournament</button>
+            <button class="btn" onclick="goTab('players')">Players / Roster</button>
+            <button class="btn" onclick="goTab('pairings')">Pairings</button>
+            <button class="btn" id="undoActionButton" onclick="undoLastAction()" disabled>↶ Undo</button><span class="status-pill" id="saveStatus" aria-live="polite">Ready</span>
+          </div>
+        </div>
+
+        <div class="card span4">
+          <h3>Current Configuration</h3>
+          <div id="configSummary" class="help"></div>
+        </div>
+
+        <div class="card span12">
+          <h3>Top Standings</h3>
+          <div id="dashboardStandings"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="players" class="section">
+      <div class="card">
+        <h3>Player Registration</h3>
+        <div class="form-row">
+          <div class="field"><label>Last Name / Surname</label><input id="playerLastName" placeholder="e.g., Averia"></div>
+          <div class="field"><label>First Name</label><input id="playerFirstName" placeholder="e.g., John Vincent"></div>
+          <div class="field"><label>Middle Initial</label><input id="playerMiddleInitial" maxlength="3" placeholder="e.g., A"></div>
+
+          <div class="field"><label>Region</label>
+            <select id="playerRegion" onchange="onRosterRegionChange()">
+              <option value="">Select Region</option>
+            </select>
+          </div>
+          <div class="field"><label>Division / Province</label>
+            <select id="playerDivision" onchange="onRosterDivisionChange()" disabled>
+              <option value="">Select Division / Province</option>
+            </select>
+          </div>
+          <div class="field"><label>Town / Municipality / City</label>
+            <select id="playerTown" onchange="onRosterTownChange()" disabled>
+              <option value="">Select Town / Municipality / City</option>
+            </select>
+          </div>
+          <div class="field wide"><label>School / DepEd School ID</label>
+            <select id="playerSchoolId" onchange="onRosterSchoolChange()" disabled>
+              <option value="">Select School</option>
+            </select>
+            <input id="playerSchool" type="hidden">
+          </div>
+
+          <div class="field"><label>Rating Status</label>
+            <select id="playerRatingStatus" onchange="toggleRatingInput()">
+              <option value="rated">Rated</option>
+              <option value="unrated">Non-Rated (NR)</option>
+            </select>
+          </div>
+          <div class="field" id="playerRatingWrap"><label>Rating</label><input id="playerRating" type="number" value="1200" min="0"></div>
+          <div class="field"><label>Competition Category</label>
+            <select id="playerCategory">
+              <option value="Elementary Boys">Elementary Boys</option>
+              <option value="Elementary Girls">Elementary Girls</option>
+              <option value="Secondary Boys">Secondary Boys</option>
+              <option value="Secondary Girls">Secondary Girls</option>
+              <option value="University / College Men">University / College Men</option>
+              <option value="University / College Women">University / College Women</option>
+              <option value="University / College Open">University / College Open</option>
+              <option value="Open">Open</option>
+            </select>
+          </div>
+          <div class="field"><label>&nbsp;</label><button class="btn primary" style="width:100%" onclick="addPlayer()">Add Player</button></div>
+
+          <div class="field full"><div id="schoolLookupStatus" class="help">Nationwide offline cascading lookup: Region → Division/Province → Town/City → School / DepEd School ID. The built-in database contains 60,924 registered schools.</div></div>
+        </div>
+        <div class="toolbar">
+          <button class="btn primary small" onclick="document.getElementById('rosterImportFile').click()">Import Roster CSV</button>
+          <input id="rosterImportFile" type="file" accept=".csv,text/csv" style="display:none" onchange="importRosterCSV(event)">
+          <button class="btn small" onclick="downloadRosterTemplate()">Download Roster Template</button>
+          <button class="btn small" onclick="sortPlayersByRating()">Sort by Rating</button>
+          <button class="btn small" onclick="clearPlayers()">Clear Players</button>
+        </div>
+        <div id="playersTable"></div>
+      </div>
+    </section>
+
+    <section id="pairings" class="section">
+      <div class="card">
+        <div class="toolbar">
+          <button class="btn primary" onclick="generateNextRound()"><span data-i18n="generateNext">Generate Next Round</span></button>
+          <button class="btn" id="undoPairingButton" onclick="undoLastAction()" disabled>↶ <span data-i18n="undoLast">Undo Last Action</span></button>
+          <button class="btn" onclick="openEditRoundModal()">✎ <span data-i18n="editResults">Edit Round Results</span></button>
+          <button class="btn" onclick="rebuildCurrentRound()"><span data-i18n="regenerate">Regenerate Current Round</span></button>
+          <button class="btn good" onclick="saveResults()"><span data-i18n="saveResults">Save Results</span></button>
+          <button class="btn" onclick="printPairings()"><span data-i18n="printPairings">Print Pairings</span></button>
+        </div>
+        <div class="note" id="pairingNote">Swiss mode uses a practical offline school/local pairing algorithm that tries to match equal scores, avoid repeat opponents, and balance colors. It is not a certified FIDE pairing engine.</div><div class="pairing-safety-note"><b>Absolute safeguards:</b><span>For standard Swiss variants, BUILD 12 blocks repeat opponents and blocks a second pairing-allocated bye. If the local pairing routine cannot produce a conflict-free round, it stops instead of creating an invalid pairing.</span></div>
+        <h3 style="margin-top:16px">Round <span id="roundLabel">0</span></h3>
+        <div id="pairingsList"></div>
+      </div>
+
+      <div class="card" id="pairingsRankingCard" style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <h3 style="margin-bottom:4px">Current Ranking</h3>
+            <div class="help" id="pairingsRankingSubtitle">Live standings based on encoded results.</div>
+          </div>
+          <button class="btn small" onclick="goTab('standings')">Open Full Standings</button>
+        </div>
+        <div id="pairingsRankingTable" aria-live="polite" style="overflow-x:auto;margin-top:12px"></div>
+      </div>
+
+      <div id="printPairingSheet" class="print-pairing-sheet"></div>
+    </section>
+
+    <section id="standings" class="section">
+      <div class="card">
+        <div class="toolbar">
+          <button class="btn" onclick="renderStandings()">Refresh</button>
+          <button class="btn" onclick="printStandingsReport()">Print Official Ranking</button>
+          <button class="btn" onclick="exportStandingsCSV()">Export CSV</button>
+        </div>
+        <h3>Standings & Final Ranking</h3>
+        <div id="standingsTable" aria-live="polite"></div>
+        <div id="printStandingsSheet" class="print-standings-sheet"></div>
+      </div>
+    </section>
+
+    <section id="tiebreaks" class="section">
+      <div class="grid">
+        <div class="card span6">
+          <h3 id="advancedTieTitle">Tie-break Priority — Swiss</h3>
+          <p id="advancedTieHelp" class="help">The first item is applied first, then the next item only to players who remain tied. Changes here apply only to the selected tournament format.</p>
+          <div id="tieList"></div>
+        </div>
+        <div class="card span6">
+          <h3>Available Tie-breaks</h3>
+          <div class="help">
+            <b>DE – Direct Encounter:</b> score among tied players who played each other.<br><br>
+            <b>Buchholz Cut 1:</b> sum of opponents' scores after dropping the lowest opponent score.<br><br>
+            <b>Buchholz:</b> sum of opponents' final scores.<br><br>
+            <b>Sonneborn-Berger:</b> opponent score weighted by your result against that opponent.<br><br>
+            <b>Wins:</b> number of wins.<br><br>
+            <b>Black Wins:</b> wins scored with Black.<br><br>
+            <b>Cumulative:</b> sum of your running score after each round.<br><br>
+            <b>Rating:</b> starting rating as a final local fallback.
+          </div>
+          <hr>
+          <button class="btn" id="resetTieButton" onclick="resetTieBreaks()">Restore Default for Selected Format</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="notation" class="section">
+      <div class="toolbar no-print">
+        <button class="btn primary" onclick="notationSample()">Fill Sample</button>
+        <button class="btn" onclick="notationBlank()">Blank Sheet</button>
+        <button class="btn" onclick="window.print()">Print Notation Sheet</button>
+      </div>
+      <div class="print-sheet">
+        <div style="text-align:center">
+          <h2 style="margin:0">CHESS NOTATION SHEET</h2>
+          <div id="notationEvent">School Chess Championship</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0">
+          <div style="border:1px solid #999;border-radius:6px;padding:10px">
+            <div style="font-weight:800;margin-bottom:8px">WHITE</div>
+            <div style="margin-bottom:8px"><b>Player:</b> <input id="nWhite" value=""></div>
+            <div><b>School:</b> <input id="nWhiteSchool" value=""></div>
+          </div>
+
+          <div style="border:1px solid #999;border-radius:6px;padding:10px">
+            <div style="font-weight:800;margin-bottom:8px">BLACK</div>
+            <div style="margin-bottom:8px"><b>Player:</b> <input id="nBlack" value=""></div>
+            <div><b>School:</b> <input id="nBlackSchool" value=""></div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0">
+          <div><b>Round:</b> <input id="nRound" value=""></div>
+          <div><b>Board:</b> <input id="nBoard" value=""></div>
+          <div><b>Date:</b> <input id="nDate" value=""></div>
+          <div><b>Result:</b> <input id="nResult" value=""></div>
+        </div>
+        <div id="notationGrid" class="score-grid"></div>
+        <div style="margin-top:34px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:54px;margin-bottom:36px">
+            <div>
+              <div style="height:28px"></div>
+              <div style="border-top:1px solid #111;text-align:center;padding-top:5px"><b>White Player Signature</b></div>
+            </div>
+            <div>
+              <div style="height:28px"></div>
+              <div style="border-top:1px solid #111;text-align:center;padding-top:5px"><b>Black Player Signature</b></div>
+            </div>
+          </div>
+
+          <div style="width:46%;margin:0 auto">
+            <div id="notationArbiter" style="text-align:center;font-size:12px;margin-bottom:4px"></div>
+            <div style="height:28px"></div>
+            <div style="border-top:1px solid #111;text-align:center;padding-top:5px"><b>Chief Arbiter Signature</b></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="reports" class="section">
+      <div class="toolbar no-print">
+        <button class="btn primary" onclick="renderReports()">Refresh Report</button>
+        <button class="btn" onclick="window.print()">Print Tournament Report</button>
+      </div>
+      <div class="report-box" id="reportBox"></div>
+    </section>
+
+    
+  </main>
+</div>
+
+
+
+<div id="settingsModal" class="settings-true-modal" aria-hidden="true">
+  <div class="settings-true-modal-window" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+    
+      <div class="settings-page-head">
+        <div>
+          <h2 id="settingsModalTitle" style="margin:0">Settings</h2>
+          <div class="help">Appearance, language, data, and tournament-manager preferences.</div>
+        </div>
+        <div class="settings-head-actions">
+          <span class="badge gold">SAVED AUTOMATICALLY</span>
+          <button type="button" class="btn" onclick="closeSettingsPanel();return false;">← Close / Back</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card span12 preferences-card">
+          <h3>Appearance & Preferences</h3>
+          <div class="form-row">
+            <div class="field">
+              <label>Theme</label>
+              <select id="settingsTheme" onchange="settingsSetTheme(this.value)">
+                <option value="light">Light — White Background</option>
+                <option value="dark">Dark</option>
+              </select>
+              <div class="help">Light remains the default on new devices.</div>
+            </div>
+
+            <div class="field">
+              <label>Font</label>
+              <select id="settingsFont" onchange="setUIFont(this.value)">
+                <option value="system">Segoe UI / System</option>
+                <option value="arial">Arial</option>
+                <option value="verdana">Verdana</option>
+                <option value="trebuchet">Trebuchet MS</option>
+                <option value="georgia">Georgia</option>
+              </select>
+              <div class="help">Changes the on-screen interface only. Official print sheets keep a clean document font.</div>
+            </div>
+
+            <div class="field">
+              <label>Interface Size</label>
+              <select id="settingsUISize" onchange="setUISize(this.value)">
+                <option value="compact">Compact</option>
+                <option value="normal">Normal</option>
+                <option value="large">Large</option>
+              </select>
+              <div class="help">Compact is useful on smaller laptops and tournament tables.</div>
+            </div>
+
+            <div class="field">
+              <label>Language</label>
+              <select id="settingsLanguage" onchange="setAppLanguage(this.value)">
+                <option value="en">English</option>
+                <option value="fil">Filipino</option>
+              </select>
+              <div class="help">Changes the main navigation and common tournament controls.</div>
+            </div>
+          </div>
+        </div>
+        <div class="card span6">
+          <h3>Standard Chess Scoring</h3>
+          <div class="locked-scoring">
+            <div><span>Win</span><b>1</b></div>
+            <div><span>Draw</span><b>½</b></div>
+            <div><span>Loss</span><b>0</b></div>
+            <div><span>Swiss Pairing Bye</span><b>1</b></div>
+          </div>
+          <div class="help" style="margin-top:10px">
+            Scoring is locked to standard chess scoring and cannot be edited.
+          </div>
+        </div>
+        <div class="card span6 desktop-app-card">
+          <h3>Desktop App</h3>
+          <div class="form-row">
+            <div class="field">
+              <label>Installed Version</label>
+              <div id="desktopAppVersion" class="desktop-value">—</div>
+            </div>
+            <div class="field">
+              <label>Local Save</label>
+              <div class="desktop-value">Local PC Profile</div>
+              <div class="help">Tournament data stays on this PC and is preserved when the app updates.</div>
+            </div>
+          </div>
+          <div class="toolbar" style="margin-top:10px">
+            <button type="button" class="btn primary" onclick="checkDesktopUpdate()">↻ Check for Updates</button>
+            <button type="button" class="btn" onclick="openDesktopDataFolder()">Open Save Folder</button>
+          </div>
+          <div id="desktopUpdateStatus" class="note" aria-live="polite" style="margin-top:10px">
+            GitHub update status will appear here.
+          </div>
+          <button type="button" class="btn primary" id="installDesktopUpdateBtn" onclick="installDesktopUpdate()" style="display:none;margin-top:10px">
+            Restart & Install Update
+          </button>
+        </div>
+
+        <div class="card span6">
+          <h3>Data</h3>
+          <p class="help">All tournament data is saved locally by the desktop app. Export a JSON backup before moving to another computer.</p>
+          <div class="toolbar">
+            <button class="btn" onclick="exportData()">Export Backup</button>
+            <button class="btn" onclick="document.getElementById('schoolCsvFile').click()">Import DepEd School Masterlist CSV</button>
+            <input id="schoolCsvFile" type="file" accept=".csv,text/csv" style="display:none" onchange="importSchoolMasterlist(event)">
+            <button class="btn danger" onclick="resetTournament()">Reset Tournament</button>
+          </div>
+          <p class="help" id="schoolDbStatus">Nationwide database built in: 60,924 schools from the SY 2020–2021 DepEd masterlist. Import a newer DepEd masterlist CSV here anytime to update or add newer/renamed schools.</p>
+        </div>
+        <div class="card span12">
+          <h3>About the Swiss Engine</h3>
+          <div class="help">This app is designed for school, club, classroom, and local-event management. BUILD 12 adds hard repeat-opponent and duplicate-bye safeguards, but the built-in Swiss routine remains a practical offline local-event engine rather than a claim of FIDE endorsement. For formally FIDE-rated Swiss events, verify pairings with the appropriate published/endorsed system and software required by the event regulations.</div>
+        </div>
+      </div>
+    
+  </div>
+</div>
+
+<div class="modal" id="tournamentWizard">
+  <div class="modal-content" style="max-width:980px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px">
+      <div>
+        <h2 style="margin:0">New Tournament <span class="badge gold">BUILD 5</span></h2>
+        <div class="help" id="wizardStepText">Step 1 of 4 — SELECT TOURNAMENT FORMAT</div>
+      </div>
+      <button class="btn" onclick="cancelTournamentWizard()">✕</button>
+    </div>
+
+    <div id="wizardStep1">
+      <h2 style="margin-bottom:6px">SELECT TOURNAMENT FORMAT</h2>
+      <div class="help" style="margin-bottom:12px">Choose the tournament format first. The dashboard will open only after the format, options, roster, and tournament setup are completed.</div>
+      <div class="help" style="margin:10px 0 16px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:#11161a">
+        <b>START TOURNAMENT FLOW:</b><br>
+        1. Select Format → 2. Configure Format → 3. Select Players → 4. Review → Dashboard
+      </div>
+      <div class="grid">
+        <div class="card span6 wizard-format-card" data-wizard-format="swiss" style="cursor:pointer" onclick="chooseWizardFormat('swiss')">
+          <div style="font-size:34px">♟</div>
+          <h3>Swiss System</h3>
+          <p class="help">For larger fields with a fixed number of rounds. After selecting Swiss, choose Flexible, Dutch-style, Accelerated, or Double Swiss.</p>
+          <button class="btn primary" style="width:100%">Choose Swiss</button>
+        </div>
+
+        <div class="card span6 wizard-format-card" data-wizard-format="roundrobin" style="cursor:pointer" onclick="chooseWizardFormat('roundrobin')">
+          <div style="font-size:34px">↻</div>
+          <h3>Round Robin</h3>
+          <p class="help">Every player plays every other player. Supports single and double round robin.</p>
+          <button class="btn primary" style="width:100%">Choose Round Robin</button>
+        </div>
+
+        <div class="card span6 wizard-format-card" data-wizard-format="knockout" style="cursor:pointer" onclick="chooseWizardFormat('knockout')">
+          <div style="font-size:34px">🏆</div>
+          <h3>Knockout</h3>
+          <p class="help">Players advance through a bracket. A decisive result is required to advance.</p>
+          <button class="btn primary" style="width:100%">Choose Knockout</button>
+        </div>
+
+        <div class="card span6 wizard-format-card" data-wizard-format="team" style="cursor:pointer" onclick="chooseWizardFormat('team')">
+          <div style="font-size:34px">♜♞♝</div>
+          <h3>Team Tournament</h3>
+          <p class="help">Schools, towns, divisions, or regions compete as teams on multiple boards. Supports Team Swiss and Team Round Robin.</p>
+          <button class="btn primary" style="width:100%">Choose Team Tournament</button>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#11161a">
+        <div>
+          <div class="help">Selected Format</div>
+          <b id="wizardSelectedFormatText" style="color:var(--accent2)">None — select a format above</b>
+        </div>
+        <button id="wizardFormatContinue" class="btn primary" disabled onclick="confirmWizardFormatSelection()">Continue →</button>
+      </div>
+
+      <div class="note" style="margin-top:14px">
+        <b>Open, Invitational, and Rating-Restricted</b> are available as entry types for the selected structure.
+        <b>Armageddon / playoff</b> is available as a final tie-resolution option.
+      </div>
+      <div class="wizard-build-note">VERSION 2.0 · MODULAR · CLEAN STARTUP · OFFLINE</div>
+    </div>
+
+    <div id="wizardStep2" style="display:none">
+      <div class="toolbar">
+        <button class="btn" onclick="returnToFormatSelection()">← Change Format</button>
+        <span class="badge gold" id="wizardFormatBadge">FORMAT NOT SELECTED</span>
+      </div>
+
+      <div id="wizardFormatOptions"></div>
+
+      <div class="wizard-participant-section compact-participants">
+        <div class="wizard-participant-head">
+          <div>
+            <div class="wizard-participant-kicker">ACTUAL TOURNAMENT ROSTER</div>
+            <h3 style="margin:3px 0 4px">Participants</h3>
+            <div class="help">Add or import the real players here. The round recommendation updates automatically without leaving the format setup.</div>
+          </div>
+          <div class="actual-player-count">
+            <span>REGISTERED</span>
+            <strong id="wizardActualPlayerCount">0</strong>
+            <small>players</small>
+          </div>
+        </div>
+
+        <div id="wizardParticipantCountPanel"></div>
+
+        <div class="participant-action-grid">
+          <button type="button" class="participant-action-card" id="wizardAddPlayerButton" onclick="openWizardAddPlayerModal();return false;">
+            <span class="participant-action-icon">＋</span>
+            <span>
+              <b>Add Player</b>
+              <small>Enter one participant manually</small>
+            </span>
+          </button>
+
+          <button type="button" class="participant-action-card" onclick="document.getElementById('wizardRosterImportFile').click()">
+            <span class="participant-action-icon">⇧</span>
+            <span>
+              <b>Import CSV</b>
+              <small>Load the actual tournament roster</small>
+            </span>
+          </button>
+
+          <button type="button" class="participant-action-card" onclick="downloadRosterTemplate()">
+            <span class="participant-action-icon">↓</span>
+            <span>
+              <b>CSV Template</b>
+              <small>Download the sample import format</small>
+            </span>
+          </button>
+        </div>
+
+        <input id="wizardRosterImportFile" type="file" accept=".csv,text/csv" style="display:none" onchange="importRosterCSV(event,true)">
+
+        <div id="wizardCompactRosterPreview" class="compact-roster-preview"></div>
+      </div>
+    </div>
+
+    <div id="wizardStep3" style="display:none">
+      <div class="toolbar">
+        <button class="btn" onclick="wizardGo(2)">← Back to Format & Players</button>
+      </div>
+
+      <h3>Roster & Round Check</h3>
+      <div class="note" style="margin-bottom:12px">
+        Confirm the actual participants and the selected number of rounds before creating the tournament.
+      </div>
+
+      <div id="wizardRosterSummary"></div>
+
+      <div class="toolbar" style="margin-top:14px">
+        <button class="btn primary" onclick="wizardGo(4)">Continue to Review →</button>
+      </div>
+    </div>
+
+    <div id="wizardStep4" style="display:none">
+      <div class="toolbar">
+        <button class="btn" onclick="wizardGo(3)">← Back</button>
+      </div>
+      <h3>Ready to Create Tournament</h3>
+      <div id="wizardReview" class="card"></div>
+      <div class="toolbar" style="margin-top:14px">
+        <button class="btn primary" onclick="confirmStartTournament()">Create Tournament & Generate Round 1</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+<div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<div class="modal app-confirm-modal" id="appConfirmModal" aria-hidden="true">
+  <div class="modal-content app-confirm-card" role="dialog" aria-modal="true" aria-labelledby="appConfirmTitle">
+    <div class="app-confirm-icon">!</div>
+    <h2 id="appConfirmTitle" style="margin:0">Confirm Action</h2>
+    <div id="appConfirmMessage" class="help" style="margin-top:8px"></div>
+    <div class="toolbar" style="margin-top:18px;justify-content:flex-end">
+      <button type="button" class="btn" id="appConfirmCancel">Cancel</button>
+      <button type="button" class="btn danger" id="appConfirmOK">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="tieBreakExplainModal" aria-hidden="true">
+  <div class="modal-content tie-explain-card" style="width:min(920px,95vw)">
+    <div class="tie-explain-head">
+      <div>
+        <div class="wizard-participant-kicker">TIE-BREAK TRANSPARENCY</div>
+        <h2 id="tieExplainPlayer" style="margin:3px 0 0">Player</h2>
+      </div>
+      <button type="button" class="btn" onclick="closeTieBreakExplanation()">✕</button>
+    </div>
+    <div id="tieExplainBody" class="tie-explain-body"></div>
+  </div>
+</div>
+
+<div class="modal" id="wizardAddPlayerModal" aria-hidden="true" onclick="if(event.target===this)closeWizardAddPlayerModal()">
+  <div class="modal-content" style="width:min(900px,95vw)" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px">
+      <div>
+        <h2 style="margin:0">Add Tournament Player</h2>
+        <div class="help">The player is added to this tournament's actual roster.</div>
+      </div>
+      <button type="button" class="btn" onclick="closeWizardAddPlayerModal()">✕</button>
+    </div>
+
+    <div class="form-row">
+      <div class="field"><label>Last Name / Surname</label><input id="wizPlayerLastName" placeholder="Averia"></div>
+      <div class="field"><label>First Name</label><input id="wizPlayerFirstName" placeholder="John Vincent"></div>
+      <div class="field"><label>Middle Initial</label><input id="wizPlayerMiddleInitial" maxlength="3" placeholder="A"></div>
+
+      <div class="field"><label>Region</label>
+        <select id="wizPlayerRegion" onchange="onWizardRegionChange()">
+          <option value="">Select Region</option>
+        </select>
+      </div>
+      <div class="field"><label>Division / Province</label>
+        <select id="wizPlayerDivision" onchange="onWizardDivisionChange()" disabled>
+          <option value="">Select Division / Province</option>
+        </select>
+      </div>
+      <div class="field"><label>Town / Municipality / City</label>
+        <select id="wizPlayerTown" onchange="onWizardTownChange()" disabled>
+          <option value="">Select Town / Municipality / City</option>
+        </select>
+      </div>
+      <div class="field wide"><label>School / DepEd School ID</label>
+        <select id="wizPlayerSchoolId" onchange="onWizardSchoolChange()" disabled>
+          <option value="">Select School</option>
+        </select>
+        <input id="wizPlayerSchool" type="hidden">
+      </div>
+
+      <div class="field"><label>Rating Status</label>
+        <select id="wizPlayerRatingStatus" onchange="toggleWizardPlayerRating()">
+          <option value="unrated">Non-Rated (NR)</option>
+          <option value="rated">Rated</option>
+        </select>
+      </div>
+      <div class="field" id="wizPlayerRatingWrap" style="display:none">
+        <label>Rating</label><input id="wizPlayerRating" type="number" min="0" value="1200">
+      </div>
+
+      <div class="field"><label>Competition Category</label>
+        <select id="wizPlayerCategory">
+          <option value="Elementary Boys">Elementary Boys</option>
+          <option value="Elementary Girls">Elementary Girls</option>
+          <option value="Secondary Boys">Secondary Boys</option>
+          <option value="Secondary Girls">Secondary Girls</option>
+          <option value="University / College Men">University / College Men</option>
+          <option value="University / College Women">University / College Women</option>
+          <option value="University / College Open">University / College Open</option>
+          <option value="Open">Open</option>
+        </select>
+      </div>
+
+      <div class="field full">
+        <div id="wizPlayerSchoolStatus" class="help">Select Region → Division/Province → Town/City → School.</div>
+      </div>
+    </div>
+
+    <div class="toolbar" style="margin-top:14px">
+      <button type="button" class="btn primary" onclick="addWizardPlayerFromModal()">Add Player</button>
+      <button type="button" class="btn" onclick="closeWizardAddPlayerModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="editRoundModal">
+  <div class="modal-content" style="width:min(980px,95vw)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px">
+      <div>
+        <h2 style="margin:0">Edit Round Results</h2>
+        <div class="help">Correct an incorrectly encoded result from any generated round.</div>
+      </div>
+      <button class="btn" onclick="closeEditRoundModal()">✕</button>
+    </div>
+
+    <div class="form-row">
+      <div class="field wide">
+        <label>Select Round to Edit</label>
+        <select id="editRoundSelect" onchange="renderEditRoundGames()"></select>
+      </div>
+    </div>
+
+    <div id="editRoundWarning" class="note" style="display:none;margin-bottom:12px"></div>
+    <div id="editRoundGames"></div>
+
+    <div class="toolbar" style="margin-top:16px">
+      <button class="btn primary" onclick="saveEditedRound()">Save Corrections</button>
+      <button class="btn" onclick="closeEditRoundModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Chess Tournament Manager 2.0 modular loader.
+     Classic scripts are intentional for offline file:// compatibility. -->
+<script src="js/state.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/app.js"></script>
+<script src="data/schools.js"></script>
+<script src="js/schools.js"></script>
+<script src="js/players.js"></script>
+<script src="js/pairings.js"></script>
+<script src="js/standings.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/tournaments.js"></script>
+<script src="js/desktop.js"></script>
+<script src="js/startup.js"></script>
+
+
+</body>
+</html>
+

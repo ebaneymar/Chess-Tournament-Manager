@@ -1,0 +1,10 @@
+{
+  "name": "Chess Tournament Manager",
+  "version": "2.0 Modular",
+  "source_build": "BUILD 19 Clean Startup",
+  "default_theme": "light",
+  "offline": true,
+  "school_rows": 60924,
+  "startup": "Main Menu only",
+  "auto_generate_round_1": false
+}
