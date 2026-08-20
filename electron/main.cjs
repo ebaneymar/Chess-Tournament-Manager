@@ -1,32 +1,26 @@
-const { app, BrowserWindow, shell, nativeImage } = require('electron');
-const http = require('http');
+const { app, BrowserWindow, shell, nativeImage, ipcMain } = require('electron');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
 const APP_NAME = 'Chess Tournament Manager';
-const APP_VERSION = '2.0.1';
+const APP_VERSION = '2.0.2';
 const GITHUB_OWNER = 'ebaneymar';
 const GITHUB_REPO = 'Chess-Tournament-Manager';
 const UPDATE_ASSET = 'Chess-Tournament-Manager.exe';
-const PORT = 49179;
-const HOST = '127.0.0.1';
 
 const localAppData = process.env.LOCALAPPDATA || path.join(app.getPath('home'), 'AppData', 'Local');
 const dataRoot = path.join(localAppData, APP_NAME);
-const profileRoot = path.join(dataRoot, 'BrowserProfile');
+const profileRoot = path.join(dataRoot, 'ElectronProfile');
 const updatesRoot = path.join(dataRoot, 'Updates');
 
-// Keep the same profile folder used by v2.0.0 so the existing local tournament
-// storage has the best chance of carrying over into the standalone shell.
 fs.mkdirSync(profileRoot, { recursive: true });
 fs.mkdirSync(updatesRoot, { recursive: true });
 app.setPath('userData', profileRoot);
 app.setName(APP_NAME);
 
 let mainWindow = null;
-let server = null;
 let latestRelease = null;
 
 const gotLock = app.requestSingleInstanceLock();
@@ -36,34 +30,10 @@ if (!gotLock) {
   app.on('second-instance', () => {
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
       mainWindow.focus();
     }
   });
-}
-
-function json(res, status, value) {
-  const body = Buffer.from(JSON.stringify(value));
-  res.writeHead(status, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Content-Length': body.length,
-    'Cache-Control': 'no-store',
-    'X-Content-Type-Options': 'nosniff'
-  });
-  res.end(body);
-}
-
-function mimeFor(file) {
-  switch (path.extname(file).toLowerCase()) {
-    case '.html': return 'text/html; charset=utf-8';
-    case '.css': return 'text/css; charset=utf-8';
-    case '.js': return 'text/javascript; charset=utf-8';
-    case '.json': return 'application/json; charset=utf-8';
-    case '.svg': return 'image/svg+xml';
-    case '.png': return 'image/png';
-    case '.ico': return 'image/x-icon';
-    case '.csv': return 'text/csv; charset=utf-8';
-    default: return 'application/octet-stream';
-  }
 }
 
 function normalizeVersion(v) {
@@ -75,7 +45,8 @@ function compareVersions(a, b) {
   const pb = normalizeVersion(b).split('.').map(x => parseInt(x, 10) || 0);
   const len = Math.max(pa.length, pb.length, 3);
   for (let i = 0; i < len; i++) {
-    const x = pa[i] || 0, y = pb[i] || 0;
+    const x = pa[i] || 0;
+    const y = pb[i] || 0;
     if (x < y) return -1;
     if (x > y) return 1;
   }
@@ -103,44 +74,56 @@ function findUpdateAsset(release) {
 
 function download(url, destination) {
   return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(destination + '.tmp');
+    const temp = destination + '.tmp';
+    fs.rmSync(temp, { force: true });
+    const file = fs.createWriteStream(temp);
+
     const request = https.get(url, {
       headers: { 'User-Agent': `Chess-Tournament-Manager/${APP_VERSION}` }
     }, response => {
       if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-        file.close(); fs.rmSync(destination + '.tmp', { force: true });
+        file.close();
+        fs.rmSync(temp, { force: true });
         return download(response.headers.location, destination).then(resolve, reject);
       }
       if (response.statusCode !== 200) {
-        file.close(); fs.rmSync(destination + '.tmp', { force: true });
+        file.close();
+        fs.rmSync(temp, { force: true });
         return reject(new Error(`Download server returned HTTP ${response.statusCode}`));
       }
       response.pipe(file);
       file.on('finish', () => {
         file.close(() => {
-          const temp = destination + '.tmp';
-          if (fs.statSync(temp).size < 1024 * 1024) {
-            fs.rmSync(temp, { force: true });
-            return reject(new Error('Downloaded update is unexpectedly small.'));
+          try {
+            if (fs.statSync(temp).size < 1024 * 1024) {
+              fs.rmSync(temp, { force: true });
+              return reject(new Error('Downloaded update is unexpectedly small.'));
+            }
+            fs.rmSync(destination, { force: true });
+            fs.renameSync(temp, destination);
+            resolve();
+          } catch (e) {
+            reject(e);
           }
-          fs.rmSync(destination, { force: true });
-          fs.renameSync(temp, destination);
-          resolve();
         });
       });
     });
+
     request.on('error', err => {
-      file.close(); fs.rmSync(destination + '.tmp', { force: true }); reject(err);
+      file.close();
+      fs.rmSync(temp, { force: true });
+      reject(err);
     });
   });
 }
 
 function portableExePath() {
-  // electron-builder portable target sets this to the original one-file EXE.
   return process.env.PORTABLE_EXECUTABLE_FILE || '';
 }
 
-function quoteCmd(s) { return `"${String(s).replaceAll('"', '""')}"`; }
+function quoteCmd(s) {
+  return `"${String(s).replaceAll('"', '""')}"`;
+}
 
 function createUpdateScript(currentExe, newExe) {
   const script = path.join(updatesRoot, 'install-update.cmd');
@@ -162,100 +145,73 @@ function createUpdateScript(currentExe, newExe) {
   return script;
 }
 
-async function handleApi(req, res, pathname) {
-  if (pathname === '/health') {
-    res.writeHead(200, {'Content-Type':'text/plain'}); res.end('ChessTournamentManager'); return true;
-  }
-  if (pathname === '/api/version') {
-    json(res, 200, {
-      version: APP_VERSION,
-      githubRepo: `${GITHUB_OWNER}/${GITHUB_REPO}`,
-      saveRoot: dataRoot,
-      shell: 'Standalone Electron Desktop'
-    });
-    return true;
-  }
-  if (pathname === '/api/open-data-folder') {
-    if (req.method !== 'POST') { json(res,405,{error:'POST required'}); return true; }
-    await shell.openPath(dataRoot);
-    json(res,200,{ok:true,path:dataRoot}); return true;
-  }
-  if (pathname === '/api/exit') {
-    if (req.method !== 'POST') { json(res,405,{error:'POST required'}); return true; }
-    json(res,200,{ok:true}); setTimeout(()=>app.quit(),120); return true;
-  }
-  if (pathname === '/api/check-update') {
-    try {
-      latestRelease = await githubLatestRelease();
-      const version = normalizeVersion(latestRelease.tag_name);
-      if (compareVersions(version, APP_VERSION) <= 0) {
-        json(res,200,{status:'current',version:APP_VERSION,message:'You already have the latest version.'});
-      } else {
-        const asset = findUpdateAsset(latestRelease);
-        json(res,200,{
-          status:'available',version,
-          message: asset ? `Version ${version} is available on GitHub.` : `Version ${version} is available, but the Windows EXE asset is missing.`
-        });
-      }
-    } catch (e) { json(res,502,{status:'error',error:e.message}); }
-    return true;
-  }
-  if (pathname === '/api/install-update') {
-    if (req.method !== 'POST') { json(res,405,{error:'POST required'}); return true; }
-    try {
-      latestRelease = latestRelease || await githubLatestRelease();
-      const version = normalizeVersion(latestRelease.tag_name);
-      if (compareVersions(version, APP_VERSION) <= 0) {
-        json(res,200,{ok:true,message:'This app is already current.'}); return true;
-      }
-      const asset = findUpdateAsset(latestRelease);
-      if (!asset) { json(res,404,{error:`Release ${version} does not contain ${UPDATE_ASSET}.`}); return true; }
-      const currentExe = portableExePath();
-      if (!currentExe) {
-        json(res,500,{error:'This update can only be installed from the packaged portable EXE.'}); return true;
-      }
-      const newExe = path.join(updatesRoot, UPDATE_ASSET);
-      await download(asset.browser_download_url, newExe);
-      const script = createUpdateScript(currentExe, newExe);
-      json(res,200,{ok:true,version,message:'Update downloaded. Chess Tournament Manager will restart.'});
-      setTimeout(() => {
-        const child = spawn('cmd.exe', ['/C', 'start', '', '/min', script], { detached:true, stdio:'ignore', windowsHide:true });
-        child.unref();
-        app.quit();
-      }, 700);
-    } catch (e) { json(res,502,{error:e.message}); }
-    return true;
-  }
-  return false;
+async function getVersionInfo() {
+  return {
+    version: APP_VERSION,
+    githubRepo: `${GITHUB_OWNER}/${GITHUB_REPO}`,
+    saveRoot: dataRoot,
+    shell: 'Standalone Electron Desktop'
+  };
 }
 
-function startServer() {
-  const appDir = path.join(__dirname, '..', 'app');
-  server = http.createServer(async (req, res) => {
-    try {
-      const u = new URL(req.url, `http://${HOST}:${PORT}`);
-      if (await handleApi(req, res, u.pathname)) return;
+async function checkUpdate() {
+  latestRelease = await githubLatestRelease();
+  const version = normalizeVersion(latestRelease.tag_name);
+  if (compareVersions(version, APP_VERSION) <= 0) {
+    return { status: 'current', version: APP_VERSION, message: 'You already have the latest version.' };
+  }
+  const asset = findUpdateAsset(latestRelease);
+  return {
+    status: 'available',
+    version,
+    message: asset ? `Version ${version} is available on GitHub.` : `Version ${version} is available, but the Windows EXE asset is missing.`
+  };
+}
 
-      let rel = decodeURIComponent(u.pathname);
-      if (rel === '/') rel = '/index.html';
-      const normalized = path.normalize(rel).replace(/^([.][.][/\\])+/, '');
-      const target = path.join(appDir, normalized.replace(/^[/\\]+/, ''));
-      if (!target.startsWith(appDir)) { res.writeHead(403); res.end('Forbidden'); return; }
-      fs.stat(target, (err, stat) => {
-        if (err || !stat.isFile()) { res.writeHead(404); res.end('Not found'); return; }
-        res.writeHead(200, {
-          'Content-Type': mimeFor(target),
-          'Cache-Control': 'no-cache',
-          'X-Content-Type-Options': 'nosniff'
-        });
-        fs.createReadStream(target).pipe(res);
-      });
-    } catch (e) { res.writeHead(500); res.end('Application server error'); }
+async function installUpdate() {
+  latestRelease = latestRelease || await githubLatestRelease();
+  const version = normalizeVersion(latestRelease.tag_name);
+  if (compareVersions(version, APP_VERSION) <= 0) {
+    return { ok: true, message: 'This app is already current.' };
+  }
+
+  const asset = findUpdateAsset(latestRelease);
+  if (!asset) throw new Error(`Release ${version} does not contain ${UPDATE_ASSET}.`);
+
+  const currentExe = portableExePath();
+  if (!currentExe) throw new Error('This update can only be installed from the packaged portable EXE.');
+
+  const newExe = path.join(updatesRoot, UPDATE_ASSET);
+  await download(asset.browser_download_url, newExe);
+  const script = createUpdateScript(currentExe, newExe);
+
+  setTimeout(() => {
+    const child = spawn('cmd.exe', ['/C', 'start', '', '/min', script], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true
+    });
+    child.unref();
+    app.quit();
+  }, 700);
+
+  return { ok: true, version, message: 'Update downloaded. Chess Tournament Manager will restart.' };
+}
+
+function registerDesktopIpc() {
+  ipcMain.handle('desktop:get-version', () => getVersionInfo());
+  ipcMain.handle('desktop:check-update', async () => {
+    try { return await checkUpdate(); }
+    catch (e) { return { status: 'error', error: e.message }; }
   });
-
-  return new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(PORT, HOST, resolve);
+  ipcMain.handle('desktop:install-update', async () => installUpdate());
+  ipcMain.handle('desktop:open-data-folder', async () => {
+    await shell.openPath(dataRoot);
+    return { ok: true, path: dataRoot };
+  });
+  ipcMain.handle('desktop:exit', () => {
+    setTimeout(() => app.quit(), 100);
+    return { ok: true };
   });
 }
 
@@ -275,6 +231,7 @@ async function createWindow() {
     title: APP_NAME,
     icon,
     webPreferences: {
+      preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
@@ -282,19 +239,26 @@ async function createWindow() {
     }
   });
 
-  mainWindow.webContents.setWindowOpenHandler(({url}) => {
-    if (/^https?:/i.test(url) && !url.startsWith(`http://${HOST}:${PORT}`)) shell.openExternal(url);
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:/i.test(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
 
-  await mainWindow.loadURL(`http://${HOST}:${PORT}/`);
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (!url.startsWith('file:')) {
+      event.preventDefault();
+      if (/^https?:/i.test(url)) shell.openExternal(url);
+    }
+  });
+
+  await mainWindow.loadFile(path.join(appDir, 'index.html'));
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
 app.whenReady().then(async () => {
   try {
-    await startServer();
+    registerDesktopIpc();
     await createWindow();
   } catch (e) {
     const { dialog } = require('electron');
@@ -304,4 +268,3 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => app.quit());
-app.on('before-quit', () => { try { server?.close(); } catch {} });

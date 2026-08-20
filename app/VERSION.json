@@ -1,7 +1,7 @@
 {
   "name": "Chess Tournament Manager",
-  "version": "2.0.1",
-  "source_build": "BUILD 19 Clean Startup",
+  "version": "2.0.2",
+  "source_build": "v2.0.2 Standalone Direct-File Shell Fix",
   "default_theme": "light",
   "offline": true,
   "school_rows": 60924,

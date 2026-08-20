@@ -1,6 +1,6 @@
 {
   "name": "chess-tournament-manager",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Standalone Windows Chess Tournament Manager",
   "main": "electron/main.cjs",
   "author": "John Vincent A. Averia",

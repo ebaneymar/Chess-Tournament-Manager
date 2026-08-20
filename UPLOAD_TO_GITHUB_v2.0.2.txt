@@ -1,0 +1,11 @@
+UPLOAD / REPLACE THESE FILES ON main:
+- electron/main.cjs
+- electron/preload.cjs
+- app/js/desktop.js
+- app/VERSION.json
+- CURRENT_VERSION.txt
+- package.json
+- README_STANDALONE_v2.0.2.txt
+
+Then run Actions manually. If green, create tag/release v2.0.2.
+The release must contain Chess-Tournament-Manager.exe.
