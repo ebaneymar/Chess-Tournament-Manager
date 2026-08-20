@@ -1,10 +1,14 @@
 {
   "name": "Chess Tournament Manager",
-  "version": "2.0 Modular",
+  "version": "2.0.1",
   "source_build": "BUILD 19 Clean Startup",
   "default_theme": "light",
   "offline": true,
   "school_rows": 60924,
   "startup": "Main Menu only",
-  "auto_generate_round_1": false
+  "auto_generate_round_1": false,
+  "edition": "Standalone Electron Desktop",
+  "desktop_shell": "Electron portable EXE",
+  "external_browser_required": false,
+  "github_updates": true
 }

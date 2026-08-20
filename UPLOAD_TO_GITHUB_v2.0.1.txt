@@ -1,0 +1,19 @@
+V2.0.1 GITHUB UPLOAD STEPS
+
+Because the connected GitHub integration currently has read-only repository contents permission,
+these files must be uploaded through GitHub's website.
+
+REPLACE/ADD ON MAIN:
+- package.json
+- electron/main.cjs
+- scripts/generate-icon.cjs
+- app/assets/logo.svg
+- app/js/desktop.js
+- app/VERSION.json
+- CURRENT_VERSION.txt
+
+IMPORTANT WORKFLOW CHANGE:
+Open .github/workflows/release.yml on GitHub, click Edit, and replace its contents with
+.github/workflows/release.yml from this package. The workflow changes from Go/Ubuntu to Electron/Windows.
+
+Then publish release tag v2.0.1.

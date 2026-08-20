@@ -1,0 +1,43 @@
+{
+  "name": "chess-tournament-manager",
+  "version": "2.0.1",
+  "description": "Standalone Windows Chess Tournament Manager",
+  "main": "electron/main.cjs",
+  "author": "John Vincent A. Averia",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "npm run make-icon && electron .",
+    "make-icon": "node scripts/generate-icon.cjs",
+    "dist": "npm run make-icon && electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "37.2.6",
+    "electron-builder": "26.0.12",
+    "sharp": "0.34.3"
+  },
+  "build": {
+    "appId": "ph.averia.chessTournamentManager",
+    "productName": "Chess Tournament Manager",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "app/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "app/assets/logo.png",
+      "artifactName": "Chess-Tournament-Manager.exe"
+    }
+  }
+}
