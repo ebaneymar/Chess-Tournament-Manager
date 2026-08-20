@@ -1,0 +1,54 @@
+name: Build and Release Chess Tournament Manager
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+
+      - name: Build Windows EXE
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: "0"
+        run: |
+          go build \
+            -trimpath \
+            -ldflags="-H windowsgui -s -w" \
+            -o Chess-Tournament-Manager.exe .
+
+      - name: Verify EXE exists
+        run: |
+          test -f Chess-Tournament-Manager.exe
+          ls -lh Chess-Tournament-Manager.exe
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Chess-Tournament-Manager-Windows
+          path: Chess-Tournament-Manager.exe
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Chess-Tournament-Manager.exe
+          generate_release_notes: true
+          fail_on_unmatched_files: true
