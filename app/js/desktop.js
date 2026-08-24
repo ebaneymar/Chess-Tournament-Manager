@@ -1,5 +1,5 @@
 // Chess Tournament Manager — standalone Electron desktop integration.
-// v2.0.2 removes the localhost dependency and uses a secure preload bridge.
+// v2.0.3 uses a MATH-a-PANG-style two-file updater: update-manifest.json + runtime ZIP.
 
 (function(){
   const statusEl=()=>document.getElementById('desktopUpdateStatus');
@@ -40,7 +40,7 @@
     if(subtitle && !document.querySelector('.desktop-shell-pill')){
       const pill=document.createElement('div');
       pill.className='desktop-shell-pill';
-      pill.textContent='▣ Standalone Windows Desktop App';
+      pill.textContent='▣ Standalone Desktop · Two-File Updates';
       subtitle.insertAdjacentElement('afterend',pill);
     }
   }
@@ -94,7 +94,7 @@
       const localSave=document.querySelector('.desktop-app-card .desktop-value + .help');
       if(localSave)localSave.textContent='Tournament data is stored locally in this PC’s Chess Tournament Manager desktop profile and remains available after EXE updates.';
 
-      setStatus(`${info.shell||'Standalone Desktop'} · GitHub updater: ${info.githubRepo}`,'info');
+      setStatus(`${info.shell||'Standalone Desktop'} · ${info.updater||'GitHub updater'} · ${info.githubRepo}`,'info');
 
       setTimeout(async()=>{
         try{

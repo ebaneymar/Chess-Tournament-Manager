@@ -2,26 +2,29 @@ const { app, BrowserWindow, shell, nativeImage, ipcMain } = require('electron');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { spawn } = require('child_process');
 
 const APP_NAME = 'Chess Tournament Manager';
-const APP_VERSION = '2.0.2';
+const SHELL_VERSION = '2.0.3';
 const GITHUB_OWNER = 'ebaneymar';
 const GITHUB_REPO = 'Chess-Tournament-Manager';
-const UPDATE_ASSET = 'Chess-Tournament-Manager.exe';
+const MANIFEST_URL = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/update-manifest.json`;
 
 const localAppData = process.env.LOCALAPPDATA || path.join(app.getPath('home'), 'AppData', 'Local');
 const dataRoot = path.join(localAppData, APP_NAME);
 const profileRoot = path.join(dataRoot, 'ElectronProfile');
+const runtimeRoot = path.join(dataRoot, 'Runtime');
+const runtimeAppDir = path.join(runtimeRoot, 'app');
+const runtimeVersionFile = path.join(runtimeRoot, 'CURRENT_VERSION.txt');
 const updatesRoot = path.join(dataRoot, 'Updates');
+const pendingFile = path.join(updatesRoot, 'pending-update.json');
 
-fs.mkdirSync(profileRoot, { recursive: true });
-fs.mkdirSync(updatesRoot, { recursive: true });
+for (const p of [profileRoot, runtimeRoot, updatesRoot]) fs.mkdirSync(p, { recursive: true });
 app.setPath('userData', profileRoot);
 app.setName(APP_NAME);
 
 let mainWindow = null;
-let latestRelease = null;
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -53,38 +56,104 @@ function compareVersions(a, b) {
   return 0;
 }
 
-async function githubLatestRelease() {
-  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
-  const response = await fetch(url, {
+function readRuntimeVersion() {
+  try {
+    const v = fs.readFileSync(runtimeVersionFile, 'utf8').trim();
+    if (v) return normalizeVersion(v);
+  } catch {}
+  try {
+    const info = JSON.parse(fs.readFileSync(path.join(runtimeAppDir, 'VERSION.json'), 'utf8'));
+    if (info.version) return normalizeVersion(info.version);
+  } catch {}
+  return SHELL_VERSION;
+}
+
+function copyDirRecursive(src, dest) {
+  fs.mkdirSync(dest, { recursive: true });
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const from = path.join(src, entry.name);
+    const to = path.join(dest, entry.name);
+    if (entry.isDirectory()) copyDirRecursive(from, to);
+    else fs.copyFileSync(from, to);
+  }
+}
+
+function seedRuntimeIfNeeded() {
+  const indexPath = path.join(runtimeAppDir, 'index.html');
+  if (fs.existsSync(indexPath)) return;
+  const bundledApp = path.join(__dirname, '..', 'app');
+  fs.rmSync(runtimeAppDir, { recursive: true, force: true });
+  copyDirRecursive(bundledApp, runtimeAppDir);
+  fs.writeFileSync(runtimeVersionFile, SHELL_VERSION + '\n', 'utf8');
+}
+
+function applyPendingRuntimeUpdate() {
+  if (!fs.existsSync(pendingFile)) return;
+  let pending;
+  try {
+    pending = JSON.parse(fs.readFileSync(pendingFile, 'utf8'));
+    const stagedApp = String(pending.stagedApp || '');
+    const version = normalizeVersion(pending.version || '');
+    if (!stagedApp || !version || !fs.existsSync(path.join(stagedApp, 'index.html'))) {
+      throw new Error('Pending update package is incomplete.');
+    }
+
+    const backup = path.join(runtimeRoot, 'app.previous');
+    fs.rmSync(backup, { recursive: true, force: true });
+
+    if (fs.existsSync(runtimeAppDir)) fs.renameSync(runtimeAppDir, backup);
+    try {
+      fs.renameSync(stagedApp, runtimeAppDir);
+      fs.writeFileSync(runtimeVersionFile, version + '\n', 'utf8');
+      fs.rmSync(backup, { recursive: true, force: true });
+      fs.rmSync(path.dirname(stagedApp), { recursive: true, force: true });
+      fs.rmSync(pendingFile, { force: true });
+    } catch (e) {
+      fs.rmSync(runtimeAppDir, { recursive: true, force: true });
+      if (fs.existsSync(backup)) fs.renameSync(backup, runtimeAppDir);
+      throw e;
+    }
+  } catch (e) {
+    try { fs.rmSync(pendingFile, { force: true }); } catch {}
+    throw e;
+  }
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), {
     headers: {
-      'Accept': 'application/vnd.github+json',
-      'User-Agent': `Chess-Tournament-Manager/${APP_VERSION}`
+      'Accept': 'application/json',
+      'User-Agent': `Chess-Tournament-Manager/${SHELL_VERSION}`
     },
     cache: 'no-store'
   });
-  if (!response.ok) throw new Error(`GitHub returned HTTP ${response.status}`);
+  if (!response.ok) throw new Error(`Update server returned HTTP ${response.status}`);
   return response.json();
 }
 
-function findUpdateAsset(release) {
-  const assets = Array.isArray(release?.assets) ? release.assets : [];
-  return assets.find(a => String(a.name).toLowerCase() === UPDATE_ASSET.toLowerCase()) ||
-    assets.find(a => /chess.*tournament.*\.exe$/i.test(String(a.name))) || null;
+function validateManifest(m) {
+  if (!m || typeof m !== 'object') throw new Error('Invalid update manifest.');
+  if (String(m.app || '') !== APP_NAME) throw new Error('Update manifest is for a different app.');
+  if (!m.version || !m.downloadUrl || !m.sha256) throw new Error('Update manifest is missing required fields.');
+  if (m.packageType && m.packageType !== 'runtime-zip') throw new Error('Unsupported update package type.');
+  if (m.minimumShellVersion && compareVersions(SHELL_VERSION, m.minimumShellVersion) < 0) {
+    throw new Error(`This update requires desktop shell ${m.minimumShellVersion} or newer.`);
+  }
+  return m;
 }
 
-function download(url, destination) {
+function downloadFile(url, destination) {
   return new Promise((resolve, reject) => {
     const temp = destination + '.tmp';
     fs.rmSync(temp, { force: true });
     const file = fs.createWriteStream(temp);
-
     const request = https.get(url, {
-      headers: { 'User-Agent': `Chess-Tournament-Manager/${APP_VERSION}` }
+      headers: { 'User-Agent': `Chess-Tournament-Manager/${SHELL_VERSION}` }
     }, response => {
       if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
         file.close();
         fs.rmSync(temp, { force: true });
-        return download(response.headers.location, destination).then(resolve, reject);
+        return downloadFile(response.headers.location, destination).then(resolve, reject);
       }
       if (response.statusCode !== 200) {
         file.close();
@@ -95,129 +164,149 @@ function download(url, destination) {
       file.on('finish', () => {
         file.close(() => {
           try {
-            if (fs.statSync(temp).size < 1024 * 1024) {
-              fs.rmSync(temp, { force: true });
-              return reject(new Error('Downloaded update is unexpectedly small.'));
-            }
             fs.rmSync(destination, { force: true });
             fs.renameSync(temp, destination);
             resolve();
-          } catch (e) {
-            reject(e);
-          }
+          } catch (e) { reject(e); }
         });
       });
     });
-
     request.on('error', err => {
-      file.close();
+      try { file.close(); } catch {}
       fs.rmSync(temp, { force: true });
       reject(err);
     });
   });
 }
 
-function portableExePath() {
-  return process.env.PORTABLE_EXECUTABLE_FILE || '';
+function sha256File(file) {
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash('sha256');
+    const stream = fs.createReadStream(file);
+    stream.on('error', reject);
+    stream.on('data', chunk => hash.update(chunk));
+    stream.on('end', () => resolve(hash.digest('hex').toLowerCase()));
+  });
 }
 
-function quoteCmd(s) {
-  return `"${String(s).replaceAll('"', '""')}"`;
+function runPowerShell(args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', ...args], {
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    let stderr = '';
+    child.stderr.on('data', d => stderr += d.toString());
+    child.on('error', reject);
+    child.on('exit', code => code === 0 ? resolve() : reject(new Error(stderr.trim() || `PowerShell exited with ${code}`)));
+  });
 }
 
-function createUpdateScript(currentExe, newExe) {
-  const script = path.join(updatesRoot, 'install-update.cmd');
-  const body = [
-    '@echo off',
-    'setlocal',
-    'timeout /t 2 /nobreak >nul',
-    ':retry',
-    `copy /Y ${quoteCmd(newExe)} ${quoteCmd(currentExe)} >nul 2>&1`,
-    'if errorlevel 1 (',
-    '  timeout /t 1 /nobreak >nul',
-    '  goto retry',
-    ')',
-    `start "" ${quoteCmd(currentExe)}`,
-    `del /Q ${quoteCmd(newExe)} >nul 2>&1`,
-    'del /Q "%~f0"'
-  ].join('\r\n');
-  fs.writeFileSync(script, body, 'utf8');
-  return script;
-}
+async function stageRuntimePackage(manifest) {
+  const version = normalizeVersion(manifest.version);
+  const zipPath = path.join(updatesRoot, `Chess_Tournament_Manager_Update_${version}.zip`);
+  await downloadFile(String(manifest.downloadUrl), zipPath);
 
-async function getVersionInfo() {
-  return {
-    version: APP_VERSION,
-    githubRepo: `${GITHUB_OWNER}/${GITHUB_REPO}`,
-    saveRoot: dataRoot,
-    shell: 'Standalone Electron Desktop'
-  };
+  const actualHash = await sha256File(zipPath);
+  const expectedHash = String(manifest.sha256).trim().toLowerCase();
+  if (actualHash !== expectedHash) {
+    fs.rmSync(zipPath, { force: true });
+    throw new Error('Update verification failed (SHA-256 mismatch).');
+  }
+
+  if (manifest.size && Number(manifest.size) !== fs.statSync(zipPath).size) {
+    fs.rmSync(zipPath, { force: true });
+    throw new Error('Update verification failed (file size mismatch).');
+  }
+
+  const stageRoot = path.join(updatesRoot, `stage-${version}-${Date.now()}`);
+  fs.mkdirSync(stageRoot, { recursive: true });
+
+  const escapedZip = zipPath.replaceAll("'", "''");
+  const escapedStage = stageRoot.replaceAll("'", "''");
+  await runPowerShell(['-Command', `Expand-Archive -LiteralPath '${escapedZip}' -DestinationPath '${escapedStage}' -Force`]);
+
+  let stagedApp = path.join(stageRoot, 'app');
+  if (!fs.existsSync(path.join(stagedApp, 'index.html'))) {
+    // Accept a package where app files are directly at ZIP root.
+    if (fs.existsSync(path.join(stageRoot, 'index.html'))) stagedApp = stageRoot;
+    else throw new Error('Update ZIP does not contain app/index.html.');
+  }
+
+  fs.writeFileSync(pendingFile, JSON.stringify({ version, stagedApp }, null, 2), 'utf8');
+  fs.rmSync(zipPath, { force: true });
+  return version;
 }
 
 async function checkUpdate() {
-  latestRelease = await githubLatestRelease();
-  const version = normalizeVersion(latestRelease.tag_name);
-  if (compareVersions(version, APP_VERSION) <= 0) {
-    return { status: 'current', version: APP_VERSION, message: 'You already have the latest version.' };
+  const manifest = validateManifest(await fetchJson(MANIFEST_URL));
+  const current = readRuntimeVersion();
+  const version = normalizeVersion(manifest.version);
+  if (compareVersions(version, current) <= 0) {
+    return {
+      status: 'current',
+      version: current,
+      message: `You already have the latest version (${current}).`
+    };
   }
-  const asset = findUpdateAsset(latestRelease);
   return {
     status: 'available',
     version,
-    message: asset ? `Version ${version} is available on GitHub.` : `Version ${version} is available, but the Windows EXE asset is missing.`
+    notes: String(manifest.notes || ''),
+    message: `Version ${version} is available.`
   };
 }
 
 async function installUpdate() {
-  latestRelease = latestRelease || await githubLatestRelease();
-  const version = normalizeVersion(latestRelease.tag_name);
-  if (compareVersions(version, APP_VERSION) <= 0) {
-    return { ok: true, message: 'This app is already current.' };
+  const manifest = validateManifest(await fetchJson(MANIFEST_URL));
+  const current = readRuntimeVersion();
+  const version = normalizeVersion(manifest.version);
+  if (compareVersions(version, current) <= 0) {
+    return { ok: true, version: current, message: 'This app is already current.' };
   }
-
-  const asset = findUpdateAsset(latestRelease);
-  if (!asset) throw new Error(`Release ${version} does not contain ${UPDATE_ASSET}.`);
-
-  const currentExe = portableExePath();
-  if (!currentExe) throw new Error('This update can only be installed from the packaged portable EXE.');
-
-  const newExe = path.join(updatesRoot, UPDATE_ASSET);
-  await download(asset.browser_download_url, newExe);
-  const script = createUpdateScript(currentExe, newExe);
-
+  await stageRuntimePackage(manifest);
   setTimeout(() => {
-    const child = spawn('cmd.exe', ['/C', 'start', '', '/min', script], {
-      detached: true,
-      stdio: 'ignore',
-      windowsHide: true
-    });
-    child.unref();
+    app.relaunch();
     app.quit();
   }, 700);
-
-  return { ok: true, version, message: 'Update downloaded. Chess Tournament Manager will restart.' };
+  return {
+    ok: true,
+    version,
+    message: `Update ${version} verified. Chess Tournament Manager will restart and install it.`
+  };
 }
 
-function registerDesktopIpc() {
-  ipcMain.handle('desktop:get-version', () => getVersionInfo());
-  ipcMain.handle('desktop:check-update', async () => {
-    try { return await checkUpdate(); }
-    catch (e) { return { status: 'error', error: e.message }; }
-  });
-  ipcMain.handle('desktop:install-update', async () => installUpdate());
-  ipcMain.handle('desktop:open-data-folder', async () => {
-    await shell.openPath(dataRoot);
-    return { ok: true, path: dataRoot };
-  });
-  ipcMain.handle('desktop:exit', () => {
-    setTimeout(() => app.quit(), 100);
-    return { ok: true };
-  });
-}
+ipcMain.handle('desktop:get-version', async () => ({
+  version: readRuntimeVersion(),
+  shellVersion: SHELL_VERSION,
+  githubRepo: `${GITHUB_OWNER}/${GITHUB_REPO}`,
+  saveRoot: dataRoot,
+  shell: 'Standalone Electron Desktop',
+  updater: 'MATH-a-PANG style · manifest + ZIP'
+}));
+
+ipcMain.handle('desktop:check-update', async () => {
+  try { return await checkUpdate(); }
+  catch (e) { return { status: 'error', error: e.message }; }
+});
+
+ipcMain.handle('desktop:install-update', async () => {
+  try { return await installUpdate(); }
+  catch (e) { throw new Error(e.message); }
+});
+
+ipcMain.handle('desktop:open-data-folder', async () => {
+  await shell.openPath(dataRoot);
+  return { ok: true, path: dataRoot };
+});
+
+ipcMain.handle('desktop:exit', async () => {
+  setTimeout(() => app.quit(), 120);
+  return { ok: true };
+});
 
 async function createWindow() {
-  const appDir = path.join(__dirname, '..', 'app');
-  const iconPath = path.join(appDir, 'assets', 'logo.png');
+  const iconPath = path.join(runtimeAppDir, 'assets', 'logo.png');
   const icon = fs.existsSync(iconPath) ? nativeImage.createFromPath(iconPath) : undefined;
 
   mainWindow = new BrowserWindow({
@@ -228,12 +317,12 @@ async function createWindow() {
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#f6f8fa',
-    title: APP_NAME,
+    title: `${APP_NAME} ${readRuntimeVersion()}`,
     icon,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
-      sandbox: true,
+      sandbox: false,
       nodeIntegration: false,
       devTools: false
     }
@@ -244,21 +333,15 @@ async function createWindow() {
     return { action: 'deny' };
   });
 
-  mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (!url.startsWith('file:')) {
-      event.preventDefault();
-      if (/^https?:/i.test(url)) shell.openExternal(url);
-    }
-  });
-
-  await mainWindow.loadFile(path.join(appDir, 'index.html'));
+  await mainWindow.loadFile(path.join(runtimeAppDir, 'index.html'));
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
 app.whenReady().then(async () => {
   try {
-    registerDesktopIpc();
+    seedRuntimeIfNeeded();
+    applyPendingRuntimeUpdate();
     await createWindow();
   } catch (e) {
     const { dialog } = require('electron');
