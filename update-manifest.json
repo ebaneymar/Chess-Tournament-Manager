@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.4.0",
+  "version": "2.4.2",
   "published": "2026-08-25",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.4.0.zip",
-  "sha256": "38a172d8306a46572e39dc9edca49161b64c74e27252b7bb0c025adbac0cd31a",
-  "size": 792387,
-  "notes": "Final easy-workflow polish: beginner-first home screen, collapsed tournament details, cleaner top bar, searchable player cards, Current Round Focus Mode, large one-tap result controls, sticky round progress, simple ranking by default, and advanced tools hidden until needed."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.4.2.zip",
+  "sha256": "e66893d0b73320afbdd3682952757e68b7f807439498a0f941b1ae59f01e06d3",
+  "size": 2453534,
+  "notes": "CatQue 4-step workspace and print preview update. Main navigation is Setup \u2192 Players \u2192 Round \u2192 Print, Advanced tools are hidden behind Advanced, and Pairings, Round Results, Ranking, Tournament Report, and Notation Sheet now open in an A4 preview with page count before printing."
 }
