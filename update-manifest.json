@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "published": "2026-08-25",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.5.0.zip",
-  "sha256": "9f836b90c968e76160ce42bc0b87a3a9712e8d793982af267a4b230c3f6599ec",
-  "size": 2459835,
-  "notes": "Introduces explicit End Round flow. Once all results in a round are entered, the main action becomes End Round instead of immediately offering Generate Next Round. Ending a non-final round then enables Generate Next Round. Ending the final round completes the tournament and shows the official Final Result. Final ranking remains provisional until End Final Round is confirmed. CatQue app icon/logo unchanged."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.5.1.zip",
+  "sha256": "4cad6554fecea8046e2244e10d42971c3568e77e0310043be5ff35d64a582b1c",
+  "size": 2460896,
+  "notes": "Adds a Shuffle Players / Reshuffle Players button before Round 1. Clicking it visibly randomizes the roster and uses that order for Swiss Round 1. The control locks after Round 1 is generated. School/DepEd all-unrated Round 1 still randomizes automatically. CatQue app icon/logo unchanged."
 }
