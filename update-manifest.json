@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.5.6",
+  "version": "2.5.7",
   "published": "2026-08-25",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.5.6.zip",
-  "sha256": "6766235065582b979831b6b735f65466813729d67d0c029ee5285fae6df24540",
-  "size": 2465942,
-  "notes": "Adds Round 1 shuffle directly to the Pairings screen. Before Round 1 starts, users can click Shuffle Round 1 / Reshuffle Round 1 and see a board-by-board pairing preview. Start Round 1 then locks the exact previewed pairing order. The shuffle button disappears after Round 1 starts. CatQue icon/logo unchanged."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.5.7.zip",
+  "sha256": "1715bfd1f827ebd3d255f689923512600c36ef3b0884d9ee689362384db68ea4",
+  "size": 2467161,
+  "notes": "Round selection fix. Swiss setup now shows large 3\u20139 round buttons and a custom 1\u201330 field. Selections work even before a roster is added and are no longer replaced by the CatQue recommendation during Roster Check or Review. Tournament Details also has the same quick round choices before Round 1. Round count locks after Round 1 begins. CatQue icon/logo unchanged."
 }
