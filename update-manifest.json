@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.4.6",
+  "version": "2.4.7",
   "published": "2026-08-25",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.4.6.zip",
-  "sha256": "b1299debbb538e5ff025313dd7ea250d4f631510f17bef6733a3dedd45476371",
-  "size": 2456240,
-  "notes": "Fixes the final-round Generate Next Round behavior. The Current Round main action now changes automatically: unfinished round -> go to unfinished result; completed round -> Generate Next Round; completed final round -> View Final Result. The final action opens the official Final Result ranking instead of appearing stuck or showing an all-rounds-generated warning. CatQue app icon/logo unchanged."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.4.7.zip",
+  "sha256": "64d051a1ec60e17dd27eef2f1b8a3beda275438cea234c469d6b2139e44f8ee2",
+  "size": 2476790,
+  "notes": "Responsive layout stabilization. Fixes collapsed/invisible tie-break cards and improves layout across Setup, Players, Round, Ranking, Print, Settings and Advanced screens. Uses shrink-safe minmax grids, better field sizing, viewport-safe modals, wrapping toolbars and responsive tables/cards. CatQue app icon/logo unchanged."
 }
