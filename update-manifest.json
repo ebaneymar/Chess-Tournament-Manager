@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.4.8",
+  "version": "2.5.0",
   "published": "2026-08-25",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.4.8.zip",
-  "sha256": "9feace2dd36f8518d06a57ac949c9193b0194034d2725cef0ad9e851eda0c2cc",
-  "size": 2458340,
-  "notes": "School/DepEd unrated Swiss Round 1 is now randomized. If all players are unrated, Round 1 uses a true shuffle before pairing and a random bye when needed. From Round 2 onward, normal score-based Swiss pairing resumes. Rated/open tournament pairing is unchanged. CatQue app icon/logo unchanged."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.5.0.zip",
+  "sha256": "9f836b90c968e76160ce42bc0b87a3a9712e8d793982af267a4b230c3f6599ec",
+  "size": 2459835,
+  "notes": "Introduces explicit End Round flow. Once all results in a round are entered, the main action becomes End Round instead of immediately offering Generate Next Round. Ending a non-final round then enables Generate Next Round. Ending the final round completes the tournament and shows the official Final Result. Final ranking remains provisional until End Final Round is confirmed. CatQue app icon/logo unchanged."
 }
