@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.5.4",
+  "version": "2.5.6",
   "published": "2026-08-25",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.5.4.zip",
-  "sha256": "fd5105d53fa5736415a386e91a2b32ddf19fe54bbd602058bc01f98a9b693b0d",
-  "size": 2464113,
-  "notes": "Five-player Swiss round-count fix plus FIDE WIN/WON correction. Five-player events now use five rounds, legacy four-round five-player events migrate to five, and Current Round displays Round X of Y. WIN includes a full-point bye and forfeit win; WON counts only over-the-board wins; BWG only OTB Black wins. CatQue app icon/logo unchanged."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.5.6.zip",
+  "sha256": "6766235065582b979831b6b735f65466813729d67d0c029ee5285fae6df24540",
+  "size": 2465942,
+  "notes": "Adds Round 1 shuffle directly to the Pairings screen. Before Round 1 starts, users can click Shuffle Round 1 / Reshuffle Round 1 and see a board-by-board pairing preview. Start Round 1 then locks the exact previewed pairing order. The shuffle button disappears after Round 1 starts. CatQue icon/logo unchanged."
 }
