@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.5.1",
+  "version": "2.5.4",
   "published": "2026-08-25",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.5.1.zip",
-  "sha256": "4cad6554fecea8046e2244e10d42971c3568e77e0310043be5ff35d64a582b1c",
-  "size": 2460896,
-  "notes": "Adds a Shuffle Players / Reshuffle Players button before Round 1. Clicking it visibly randomizes the roster and uses that order for Swiss Round 1. The control locks after Round 1 is generated. School/DepEd all-unrated Round 1 still randomizes automatically. CatQue app icon/logo unchanged."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.5.4.zip",
+  "sha256": "fd5105d53fa5736415a386e91a2b32ddf19fe54bbd602058bc01f98a9b693b0d",
+  "size": 2464113,
+  "notes": "Five-player Swiss round-count fix plus FIDE WIN/WON correction. Five-player events now use five rounds, legacy four-round five-player events migrate to five, and Current Round displays Round X of Y. WIN includes a full-point bye and forfeit win; WON counts only over-the-board wins; BWG only OTB Black wins. CatQue app icon/logo unchanged."
 }
