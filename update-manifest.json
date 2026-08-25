@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.4.7",
+  "version": "2.4.8",
   "published": "2026-08-25",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.4.7.zip",
-  "sha256": "64d051a1ec60e17dd27eef2f1b8a3beda275438cea234c469d6b2139e44f8ee2",
-  "size": 2476790,
-  "notes": "Responsive layout stabilization. Fixes collapsed/invisible tie-break cards and improves layout across Setup, Players, Round, Ranking, Print, Settings and Advanced screens. Uses shrink-safe minmax grids, better field sizing, viewport-safe modals, wrapping toolbars and responsive tables/cards. CatQue app icon/logo unchanged."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.4.8.zip",
+  "sha256": "9feace2dd36f8518d06a57ac949c9193b0194034d2725cef0ad9e851eda0c2cc",
+  "size": 2458340,
+  "notes": "School/DepEd unrated Swiss Round 1 is now randomized. If all players are unrated, Round 1 uses a true shuffle before pairing and a random bye when needed. From Round 2 onward, normal score-based Swiss pairing resumes. Rated/open tournament pairing is unchanged. CatQue app icon/logo unchanged."
 }
