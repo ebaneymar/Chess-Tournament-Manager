@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "published": "2026-08-25",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.4.2.zip",
-  "sha256": "e66893d0b73320afbdd3682952757e68b7f807439498a0f941b1ae59f01e06d3",
-  "size": 2453534,
-  "notes": "CatQue 4-step workspace and print preview update. Main navigation is Setup \u2192 Players \u2192 Round \u2192 Print, Advanced tools are hidden behind Advanced, and Pairings, Round Results, Ranking, Tournament Report, and Notation Sheet now open in an A4 preview with page count before printing."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.4.3.zip",
+  "sha256": "f89c26513887ddcc52686066b04fbf71ec889f05349ea9b7ba074978e43badf1",
+  "size": 2474279,
+  "notes": "Smart one-sheet print fitting: Pairings, Round Results, and Ranking automatically compact and scale to one A4 sheet when the result remains readable. Large tournaments stay multi-page instead of shrinking below a safe minimum. Preview now shows Auto Fit scale and can toggle Auto Fit ON/OFF. CatQue logo/icon assets are unchanged."
 }
