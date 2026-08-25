@@ -1,0 +1,11 @@
+{
+  "app": "Chess Tournament Manager",
+  "version": "2.0.4",
+  "published": "2026-08-24",
+  "packageType": "runtime-zip",
+  "minimumShellVersion": "2.0.3",
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.0.4.zip",
+  "sha256": "955d4fc693ce6b284b264ddfd516e28457af5b9c41edc2898e65175649eb78c7",
+  "size": 800007,
+  "notes": "Two-file updater test. Shows 'Two-File Updater Active \u00b7 v2.0.4' on the main menu."
+}
