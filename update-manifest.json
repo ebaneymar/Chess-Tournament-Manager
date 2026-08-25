@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.4.3",
+  "version": "2.4.6",
   "published": "2026-08-25",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.4.3.zip",
-  "sha256": "f89c26513887ddcc52686066b04fbf71ec889f05349ea9b7ba074978e43badf1",
-  "size": 2474279,
-  "notes": "Smart one-sheet print fitting: Pairings, Round Results, and Ranking automatically compact and scale to one A4 sheet when the result remains readable. Large tournaments stay multi-page instead of shrinking below a safe minimum. Preview now shows Auto Fit scale and can toggle Auto Fit ON/OFF. CatQue logo/icon assets are unchanged."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.4.6.zip",
+  "sha256": "b1299debbb538e5ff025313dd7ea250d4f631510f17bef6733a3dedd45476371",
+  "size": 2456240,
+  "notes": "Fixes the final-round Generate Next Round behavior. The Current Round main action now changes automatically: unfinished round -> go to unfinished result; completed round -> Generate Next Round; completed final round -> View Final Result. The final action opens the official Final Result ranking instead of appearing stuck or showing an all-rounds-generated warning. CatQue app icon/logo unchanged."
 }
