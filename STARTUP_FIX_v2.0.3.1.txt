@@ -1,0 +1,11 @@
+Chess Tournament Manager v2.0.3.1 startup fix
+
+Fixes:
+- Does not copy the bundled app out of app.asar on first startup.
+- Loads bundled app directly until a two-file runtime update is installed.
+- Disables hardware acceleration for broader Windows compatibility.
+- Removes silent single-instance exit behavior.
+- Writes startup diagnostics to:
+  %LOCALAPPDATA%\Chess Tournament Manager\startup.log
+
+The MATH-a-PANG-style two-file updater remains enabled.
