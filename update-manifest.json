@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "published": "2026-08-26",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.6.0.zip",
-  "sha256": "9a10c0390d6c5a366324c2f0ee87b4441a0c9199bf2cfc06c49c7a23636aee25",
-  "size": 2488404,
-  "notes": "Tournament-integrity core repair: FIDE 2026 Swiss unplayed-round Buchholz/SB handling, WIN/BWG correction, played-vs-paired forfeit handling, Double-Swiss 1.5 PAB, Team Swiss drawn-match PAB/missing-board/no-repeat safeguards, Round-Robin Buchholz removal, NR rating protection, recursive Direct Encounter, shared-place fallback, knockout Random Draw fix, final-result invalidation after corrections, and late-entry lock. Dutch-style remains explicitly local/not FIDE Dutch. CatQue icon/logo unchanged."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.6.1.zip",
+  "sha256": "bd1f546de9d85a4f434302d7a1b500e252721178edf6030df7976039e6a50c01",
+  "size": 2493757,
+  "notes": "FIDE Dutch correction on top of the v2.6.0 tournament-integrity repair. The Dutch option is now FIDE Dutch Swiss and uses pinned @echecs/swiss v5.0.0 C.04.3 through the published pair(Player[], Game[][]) API, with a built-in regression self-test and no Flexible fallback. Requested bye and forfeit kinds are preserved for the exact engine. The 21 core repair tests continue to pass. CatQue logo/app icon unchanged."
 }
