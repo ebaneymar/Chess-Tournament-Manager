@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.5.7",
+  "version": "2.5.9",
   "published": "2026-08-25",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.5.7.zip",
-  "sha256": "1715bfd1f827ebd3d255f689923512600c36ef3b0884d9ee689362384db68ea4",
-  "size": 2467161,
-  "notes": "Round selection fix. Swiss setup now shows large 3\u20139 round buttons and a custom 1\u201330 field. Selections work even before a roster is added and are no longer replaced by the CatQue recommendation during Roster Check or Review. Tournament Details also has the same quick round choices before Round 1. Round count locks after Round 1 begins. CatQue icon/logo unchanged."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.5.9.zip",
+  "sha256": "3f0f32905fb577d95be00a62444359ea1d2ae93f1e233569add0333e4b738457",
+  "size": 2473752,
+  "notes": "Exact FIDE Dutch update. Pure Dutch tournaments now call the pinned @echecs/swiss v5.0.0 C.04.3 pair() engine. CatQue only adapts roster/results/byes/forfeits to and from that engine. The previous CatQue approximation and Flexible pairing are not used for pure Dutch. The engine is preloaded and cached locally after successful retrieval so it can be reused offline. Round-1 Dutch shuffle uses the shuffled roster as TPN order and the preview comes from the exact engine. CatQue app icon/logo unchanged."
 }
