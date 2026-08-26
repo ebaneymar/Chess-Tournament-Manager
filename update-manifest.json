@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "published": "2026-08-26",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.6.1.zip",
-  "sha256": "bd1f546de9d85a4f434302d7a1b500e252721178edf6030df7976039e6a50c01",
-  "size": 2493757,
-  "notes": "FIDE Dutch correction on top of the v2.6.0 tournament-integrity repair. The Dutch option is now FIDE Dutch Swiss and uses pinned @echecs/swiss v5.0.0 C.04.3 through the published pair(Player[], Game[][]) API, with a built-in regression self-test and no Flexible fallback. Requested bye and forfeit kinds are preserved for the exact engine. The 21 core repair tests continue to pass. CatQue logo/app icon unchanged."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.6.2.zip",
+  "sha256": "7448e4657f285633e2c7c73b4f0299bd7e928b3a54aaf6c45578f8404116b55c",
+  "size": 2477419,
+  "notes": "Fixes the FIDE Dutch Round 1 'Exact Dutch engine unavailable' failure in Electron/file://. The exact @echecs/swiss v5.0.0 C.04.3 loader is now a classic script installed before startup.js, with pinned dynamic import and cache/source fallback. No Flexible Swiss fallback. All 21 v2.6.0 core tournament-integrity regression tests and the exact-Dutch adapter/loader checks pass. CatQue logo/app icon unchanged."
 }
