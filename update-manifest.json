@@ -1,11 +1,11 @@
 {
   "app": "Chess Tournament Manager",
-  "version": "2.5.9",
-  "published": "2026-08-25",
+  "version": "2.6.0",
+  "published": "2026-08-26",
   "packageType": "runtime-zip",
   "minimumShellVersion": "2.0.3.1",
-  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.5.9.zip",
-  "sha256": "3f0f32905fb577d95be00a62444359ea1d2ae93f1e233569add0333e4b738457",
-  "size": 2473752,
-  "notes": "Exact FIDE Dutch update. Pure Dutch tournaments now call the pinned @echecs/swiss v5.0.0 C.04.3 pair() engine. CatQue only adapts roster/results/byes/forfeits to and from that engine. The previous CatQue approximation and Flexible pairing are not used for pure Dutch. The engine is preloaded and cached locally after successful retrieval so it can be reused offline. Round-1 Dutch shuffle uses the shuffled roster as TPN order and the preview comes from the exact engine. CatQue app icon/logo unchanged."
+  "downloadUrl": "https://raw.githubusercontent.com/ebaneymar/Chess-Tournament-Manager/main/Chess_Tournament_Manager_Update_2.6.0.zip",
+  "sha256": "9a10c0390d6c5a366324c2f0ee87b4441a0c9199bf2cfc06c49c7a23636aee25",
+  "size": 2488404,
+  "notes": "Tournament-integrity core repair: FIDE 2026 Swiss unplayed-round Buchholz/SB handling, WIN/BWG correction, played-vs-paired forfeit handling, Double-Swiss 1.5 PAB, Team Swiss drawn-match PAB/missing-board/no-repeat safeguards, Round-Robin Buchholz removal, NR rating protection, recursive Direct Encounter, shared-place fallback, knockout Random Draw fix, final-result invalidation after corrections, and late-entry lock. Dutch-style remains explicitly local/not FIDE Dutch. CatQue icon/logo unchanged."
 }
